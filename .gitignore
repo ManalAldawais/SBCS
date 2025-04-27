@@ -1,7 +1,0 @@
-raw_data/
-
-yolov8-streamlit-detection-tracking/assets
-yolov8-streamlit-detection-tracking/images
-yolov8-streamlit-detection-tracking/videos
-yolov8-streamlit-detection-tracking/assets/weights
-*.pt
