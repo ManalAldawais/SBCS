@@ -8,6 +8,15 @@ from PIL import Image
 from ultralytics.utils.plotting import Annotator
 
 
+from helper_email import send_email_alert
+from pathlib import Path
+import tempfile
+import os
+
+email_sent = False
+
+
+
 def load_model(model_path):
     """
     Loads a YOLO object detection model from the specified model_path.
@@ -33,20 +42,11 @@ def display_tracker_options():
 
 def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=None, tracker=None):
 
-    """
-    Display the detected objects on a video frame using the YOLOv8 model.
+    st.session_state.email_sent = False
+    st.session_state.alert_shown = False
+    st.session_state.sound_played = False
 
-    Args:
-    - conf (float): Confidence threshold for object detection.
-    - model (YoloV8): A YOLOv8 object detection model.
-    - st_frame (Streamlit object): A Streamlit object to display the detected video.
-    - image (numpy array): A numpy array representing the video frame.
-    - is_display_tracking (bool): A flag indicating whether to display object tracking (default=None).
-
-    Returns:
-    None
-    """
-    image = cv2.resize(image, (720, int(720*(9/16))))
+    image = cv2.resize(image, (720, int(720 * (9 / 16))))
 
     if is_display_tracking:
         res = model.track(image, conf=conf, persist=True, tracker=tracker)
@@ -55,87 +55,80 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
 
     annotator = Annotator(image)
 
-
     for box in res[0].boxes:
-        print(box)
-        class_id = int(box.cls[0])  # Class index
-        class_name = model.names[class_id]  # Class name
+        class_id = int(box.cls[0])
+        label = model.names[class_id]
+        b = box.xyxy[0].cpu().numpy()
 
-
-        b = box.xyxy[0].cpu().numpy()  # Bounding box coordinates
-
-        # Custom color
-        if class_name == "violence":
-            color = (0, 0, 255)  # RED
-        else:
-            color = (0, 255, 0)  # GREEN
-
-        label_text = class_name
-
-        if hasattr(box, 'id') and box.id is not None:
-            track_id = int(box.id[0])
-            label_text += f"ID:  {track_id}"
-
-        annotator.box_label(b, label_text, color=color)
+        color = (0, 0, 255) if label.lower() == "violence" else (0, 255, 0)
+        annotator.box_label(b, label, color=color)
 
     res_plotted = annotator.result()
+
+
+    violence_detected = any(model.names[int(box.cls[0])].lower() == 'violence' for box in res[0].boxes)
+
+    if violence_detected:
+
+        if not st.session_state.email_sent:
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+                    temp_image_path = tmp_file.name
+                    cv2.imwrite(temp_image_path, res_plotted)
+
+                send_email_alert(
+                    receiver_email="Mahaalosaimi2@gmail.com",
+                    subject="🚨 Urgent Security Alert: Violence Detected",
+                    message_body="""\
+                        Dear User,
+
+                        Attention! A potential act of violence has been detected by the security monitoring system.
+
+                        ⚠️ Immediate review of the situation is strongly recommended.
+
+                        Stay safe,
+                        Your Security Monitoring System
+                        """,
+                                            image_path=Path(temp_image_path))
+
+                st.session_state.email_sent = True
+                os.remove(temp_image_path)
+
+            except Exception as e:
+                st.warning(f"Failed to send email alert: {e}")
+
+
+        if not st.session_state.alert_shown:
+            st.error("🚨 Violence detected! 🚨", icon="🚨")
+            st.session_state.alert_shown = True
+
+
+        if not st.session_state.sound_played:
+            st.audio(str(settings.ALARM_AUDIO), format="audio/wav", autoplay=True)
+            st.session_state.sound_played = True
+
+
+        st.markdown(
+            """
+            <style>
+            body {
+                background-color: red;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+        if st.button("🛑 Stop Alarm and Reset Background",key=f"reset_alarm"):
+            st.session_state.email_sent = False
+            st.session_state.alert_shown = False
+            st.session_state.sound_played = False
+
+
+            st.experimental_rerun()
+
     st_frame.image(res_plotted, caption='Detected Video', channels="BGR", use_column_width=True)
-
-
-
-def get_youtube_stream_url(youtube_url):
-    ydl_opts = {
-        'format': 'best[ext=mp4]',
-        'no_warnings': True,
-        'quiet': True
-
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(youtube_url, download=False)
-        return info['url']
-
-def play_youtube_video(conf, model):
-    source_youtube = st.sidebar.text_input("YouTube Video url")
-    is_display_tracker, tracker = display_tracker_options()
-
-    if st.sidebar.button('Detect Objects'):
-        if not source_youtube:
-            st.sidebar.error("Please enter a YouTube URL")
-            return
-
-        try:
-            st.sidebar.info("Extracting video stream URL...")
-            stream_url = get_youtube_stream_url(source_youtube)
-
-            st.sidebar.info("Opening video stream...")
-            vid_cap = cv2.VideoCapture(stream_url)
-
-            if not vid_cap.isOpened():
-                st.sidebar.error(
-                    "Failed to open video stream. Please try a different video.")
-                return
-
-            st.sidebar.success("Video stream opened successfully!")
-            st_frame = st.empty()
-            while vid_cap.isOpened():
-                success, image = vid_cap.read()
-                if success:
-                    _display_detected_frames(
-                        conf,
-                        model,
-                        st_frame,
-                        image,
-                        is_display_tracker,
-                        tracker
-                    )
-                else:
-                    break
-
-            vid_cap.release()
-
-        except Exception as e:
-            st.sidebar.error(f"An error occurred: {str(e)}")
-
 
 def play_rtsp_stream(conf, model):
     """
@@ -194,7 +187,7 @@ def play_webcam(conf, model):
             image = Image.open(camera_image)
             st.image(image, caption="Captured Image", use_column_width=True)
 
-            if st.button("Detect Objects"):
+            if st.button("Detect Objects",key="object_detection"):
                 res = model.predict(image, conf=conf)
                 res_plotted = res[0].plot()[:, :, ::-1]
                 st.image(res_plotted, caption="Detected Image", use_column_width=True)
@@ -232,6 +225,9 @@ def play_stored_video(conf, model):
         st.video(video_bytes)
 
     if st.sidebar.button('Detect Video Objects'):
+
+
+
         try:
             vid_cap = cv2.VideoCapture(
                 str(settings.VIDEOS_DICT.get(source_vid)))
@@ -246,6 +242,8 @@ def play_stored_video(conf, model):
                                              is_display_tracker,
                                              tracker
                                              )
+
+
                 else:
                     vid_cap.release()
                     break
