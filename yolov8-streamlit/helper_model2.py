@@ -6,15 +6,15 @@ import settings
 import numpy as np
 from PIL import Image
 from ultralytics.utils.plotting import Annotator
-
-
+from streamlit_TTS import auto_play
+import io
+from pydub import AudioSegment
 from helper_email import send_email_alert
 from pathlib import Path
 import tempfile
 import os
 
 email_sent = False
-
 
 
 def load_model(model_path):
@@ -104,8 +104,38 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
 
 
         if not st.session_state.sound_played:
-            st.audio(str(settings.ALARM_AUDIO), format="audio/wav", autoplay=True)
+
+            # st.audio(str(settings.ALARM_AUDIO), format="audio/wav", autoplay=True)
             st.session_state.sound_played = True
+
+            # Convert MP3 to WAV and make it mono
+            audio = AudioSegment.from_wav(str(settings.ALARM_AUDIO))
+
+            tts = audio
+            mp3_buffer = io.BytesIO()
+            tts.write_to_fp(mp3_buffer)
+
+            mp3_buffer.seek(0)
+
+            # Convert MP3 to WAV and make it mono
+            audio = AudioSegment.from_file(mp3_buffer,format="mp3").set_channels(1)
+
+            # Extract audio properties
+            sample_rate = audio.frame_rate
+            sample_width = audio.sample_width
+
+            # Export audio to WAV in memory buffer
+            wav_buffer = io.BytesIO()
+            audio.export(wav_buffer, format="wav")
+
+
+
+            audio={
+                'bytes': wav_buffer, # wav audio bytes
+                'sample_rate':sample_rate, # the sample rate of the audio
+                'sample_width':sample_width, # the sample width of the audio
+            }
+            auto_play(audio)
 
 
         st.markdown(
@@ -200,6 +230,8 @@ def play_webcam(conf, model):
         except Exception as ex:
             st.error("Error while processing camera image.")
             st.error(ex)
+
+
 def play_stored_video(conf, model):
     """
     Plays a stored video file. Tracks and detects objects in real-time using the YOLOv8 object detection model.
