@@ -6,9 +6,7 @@ import settings
 import numpy as np
 from PIL import Image
 from ultralytics.utils.plotting import Annotator
-from streamlit_TTS import auto_play
 import io
-from pydub import AudioSegment
 from helper_email import send_email_alert
 from pathlib import Path
 import tempfile
@@ -98,45 +96,11 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
                 st.warning(f"Failed to send email alert: {e}")
 
 
-        if not st.session_state.alert_shown:
+        if not st.session_state.sound_played and not st.session_state.alert_shown:
+            st.audio(str(settings.ALARM_AUDIO), format="audio/wav", autoplay=True)
+            st.session_state.sound_played = True
             st.error("🚨 Violence detected! 🚨", icon="🚨")
             st.session_state.alert_shown = True
-
-
-        if not st.session_state.sound_played:
-
-            # st.audio(str(settings.ALARM_AUDIO), format="audio/wav", autoplay=True)
-            st.session_state.sound_played = True
-
-            # Convert MP3 to WAV and make it mono
-            audio = AudioSegment.from_wav(str(settings.ALARM_AUDIO))
-
-            tts = audio
-            mp3_buffer = io.BytesIO()
-            tts.write_to_fp(mp3_buffer)
-
-            mp3_buffer.seek(0)
-
-            # Convert MP3 to WAV and make it mono
-            audio = AudioSegment.from_file(mp3_buffer,format="mp3").set_channels(1)
-
-            # Extract audio properties
-            sample_rate = audio.frame_rate
-            sample_width = audio.sample_width
-
-            # Export audio to WAV in memory buffer
-            wav_buffer = io.BytesIO()
-            audio.export(wav_buffer, format="wav")
-
-
-
-            audio={
-                'bytes': wav_buffer, # wav audio bytes
-                'sample_rate':sample_rate, # the sample rate of the audio
-                'sample_width':sample_width, # the sample width of the audio
-            }
-            auto_play(audio)
-
 
         st.markdown(
             """
@@ -154,8 +118,6 @@ def _display_detected_frames(conf, model, st_frame, image, is_display_tracking=N
             st.session_state.email_sent = False
             st.session_state.alert_shown = False
             st.session_state.sound_played = False
-
-
             st.experimental_rerun()
 
     st_frame.image(res_plotted, caption='Detected Video', channels="BGR", use_column_width=True)
@@ -257,9 +219,6 @@ def play_stored_video(conf, model):
         st.video(video_bytes)
 
     if st.sidebar.button('Detect Video Objects'):
-
-
-
         try:
             vid_cap = cv2.VideoCapture(
                 str(settings.VIDEOS_DICT.get(source_vid)))
@@ -274,8 +233,8 @@ def play_stored_video(conf, model):
                                              is_display_tracker,
                                              tracker
                                              )
-
-
+                    if st.session_state.sound_played and st.session_state.alert_shown:
+                        break
                 else:
                     vid_cap.release()
                     break
