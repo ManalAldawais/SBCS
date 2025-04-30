@@ -2,3 +2,5 @@
 yolov8-streamlit/yt.txt
 yolov8-streamlit/cookies.txt
 yolov8-streamlit/__pycache__/*
+data/
+
