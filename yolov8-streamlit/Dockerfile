@@ -1,6 +1,9 @@
 FROM python:3.10.6-buster
+
 WORKDIR /app
+
 COPY packages.txt .
+
 RUN apt-get update && \
     xargs -a packages.txt apt-get install -y && \
     apt-get clean && rm -rf /var/lib/apt/lists/* || true
