@@ -11,15 +11,15 @@ import helper_model2 as m2
 
 # Setting page layout
 st.set_page_config(
-    page_title="Object Detection using YOLOv8",
-    page_icon="🤖",
+    page_title="School Buses Controlling System",
+    page_icon="🚌",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 
 # Main page heading
-st.title("Violence & Student Detection using YOLOv8")
+st.title("Violence & Student Detection")
 
 # Sidebar for selecting model
 model_type = st.sidebar.radio(
@@ -37,6 +37,7 @@ elif model_type == 'Student Detection':
     confidence = 0.2
 
 st.sidebar.header("Image/Video Config")
+
 source_radio = st.sidebar.radio(
     "Select Source", settings.SOURCES_LIST
 )
