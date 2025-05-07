@@ -8,6 +8,7 @@ import helper_model2 as m2
 
 
 
+
 # Setting page layout
 st.set_page_config(
     page_title="Object Detection using YOLOv8",
@@ -15,6 +16,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 
 # Main page heading
 st.title("Violence & Student Detection using YOLOv8")
