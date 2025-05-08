@@ -4,12 +4,16 @@ import pandas as pd
 import numpy as np
 
 
+
 st.set_page_config(
     page_title="Project Overview",
-    page_icon="📘",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+
+
 
 st.title("📘 Project Overview: School Bus Controlling System")
 st.markdown("")
@@ -91,4 +95,50 @@ st.altair_chart(chart, use_container_width=False)
 
 
 st.markdown("---")
-st.markdown("Developed with ❤️ from KSA.")
+
+import streamlit as st
+
+# Footer styled as part of the main content
+st.markdown(
+    """
+    <style>
+    .footer {
+        margin-top: 50px;
+        padding: 15px 0;
+        text-align: center;
+        font-size: 14px;
+        background-color: transparent;
+    }
+    .footer a {
+        color: #0e76a8;
+        text-decoration: none;
+        margin: 0 15px;
+        display: inline-flex;
+        align-items: center;
+    }
+    .footer img {
+        height: 18px;
+        margin-right: 5px;
+    }
+    </style>
+
+    <div class="footer">
+        <a href="https://www.linkedin.com/in/manal-aldawais-949981208?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">Manal Aldawais
+        </a>
+        <a href="https://www.linkedin.com/in/amirah-almutairi-596629141?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">Amirah Almutairi
+        </a>
+        <a href="https://www.linkedin.com/in/shuruq-alotaibi-6014b3302/" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">Shuruq Alotaibi
+        </a>
+        <a href="https://www.linkedin.com/in/alanoud-aldeghaither-3ba32631b/" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">Alanoud Aldeghaither
+         </a>
+        <a href="https://www.linkedin.com/in/mahaalosaimi2?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">Maha Alosaimi
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
