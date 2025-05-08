@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 st.title("📘 Project Overview: School Bus Controlling System")
-st.markdown("")
+st.markdown("<br><br>", unsafe_allow_html=True)
 
 image = Image.open("image/3.jpg")
 
@@ -38,6 +38,7 @@ He was accidentally left behind and later found deceased, prompting urgent discu
     )
 
 
+st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown("""
 ## 🔍 Project Goals
@@ -62,9 +63,8 @@ The models are loaded using **custom-trained YOLOv8 weights** and run inference 
 ## 💡 USA Case Studey
 """)
 
-# Add sample images
-import streamlit as st
-import pandas as pd
+
+
 import altair as alt
 
 # Data from your chart
@@ -96,7 +96,7 @@ st.altair_chart(chart, use_container_width=False)
 
 st.markdown("---")
 
-import streamlit as st
+
 
 # Footer styled as part of the main content
 st.markdown(
